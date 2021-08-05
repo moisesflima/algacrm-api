@@ -2,7 +2,9 @@ package com.algaworks.crm.services;
 
 import java.util.List;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -23,12 +25,23 @@ public class ClienteService {
 		return clienteRepository.findAll();
 	}
 	
-	public Cliente retrieveById(long id) {
-		return clienteRepository.findById(id).get();
+	public ResponseEntity retrieveById(long id) {
+		return clienteRepository.findById(id)
+				.map(record -> ResponseEntity.ok().body(record))
+				.orElse(ResponseEntity.notFound().build());
 	}	
 	
-	public Cliente update(Cliente cliente) {
-		return clienteRepository.save(cliente);
+	public ResponseEntity update(Cliente cliente) {
+		Cliente c = clienteRepository.findById(cliente.getId()).get();
+
+		if (c == null) {
+			return ResponseEntity.notFound().build();
+		}
+		
+		BeanUtils.copyProperties(cliente, c, "id");
+		clienteRepository.save(cliente);
+		
+		return ResponseEntity.ok().body(cliente);
 	}
 	
 	public void delete(Cliente cliente) {
